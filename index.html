@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Grand Luxury Interactive Christmas Tree</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
+      
+      body, html {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #020402; /* Deepest Green/Black */
+      }
+      
+      /* Photo overlay animations */
+      
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      
+      @keyframes scaleIn {
+        from {
+          transform: scale(0.8);
+          opacity: 0;
+        }
+        to {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+      
+      .animate-fade-in {
+        animation: fadeIn 0.3s ease-out;
+      }
+      
+      .animate-scale-in {
+        animation: scaleIn 0.4s ease-out;
+      }
+    </style>
+
+<link rel="stylesheet" href="/index.css">
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "@react-three/fiber": "https://aistudiocdn.com/@react-three/fiber@^9.4.0",
+    "three": "https://aistudiocdn.com/three@^0.181.2",
+    "@react-three/postprocessing": "https://aistudiocdn.com/@react-three/postprocessing@^3.0.4",
+    "@react-three/drei": "https://aistudiocdn.com/@react-three/drei@^10.7.7",
+    "postprocessing": "https://aistudiocdn.com/postprocessing@^6.38.0",
+    "@mediapipe/tasks-vision": "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/+esm"
+  }
+}
+</script>
+  <script type="module" crossorigin src="/assets/index-Ce6zfXP4.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/react-vendor-Bzgz95E1.js">
+  <link rel="modulepreload" crossorigin href="/assets/three-vendor-IWongE37.js">
+  <link rel="modulepreload" crossorigin href="/assets/postprocessing-vendor-Oz0s9CZI.js">
+</head>
+  <body>
+    <div id="root"></div>
+<!-- 开始添加版权文字：光学居中修正版 -->
+<div style="
+  position: fixed;
+  bottom: 15px;       /* 稍微往下挪一点，减少遮挡圣诞树 */
+  left: 0; 
+  width: 100%; 
+  text-align: center; 
+  z-index: 9999; 
+  pointer-events: none; 
+  font-family: 'Songti SC', 'Noto Serif SC', 'SimSun', 'Times New Roman', serif; 
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
+">
+  
+  <!-- 第一行：红豆生南国 敬制 -->
+  <div style="
+    font-size: 19px; 
+    letter-spacing: 6px; 
+    margin-bottom: 4px;   /* 拉近两行距离 */
+    font-weight: 500;
+    text-indent: 6px;     /* 【关键】增加左缩进，抵消右边的字间距，实现完美居中 */
+  ">
+    红豆生南国 <span style="font-size: 13px; opacity: 0.85; font-weight: 300;">敬制</span>
+  </div>
+
+  <!-- 第二行：版权 + 公众号 -->
+  <div style="
+    font-size: 12px; 
+    letter-spacing: 2px; 
+    opacity: 0.75; 
+    font-family: 'Microsoft YaHei', sans-serif;
+    text-indent: 2px;     /*同样平衡一下第二行的间距 */
+  ">
+    <span style="margin-right: 6px;">© 2025</span>
+    <span>公众号 · 获嘉诗词空间</span>
+  </div>
+
+</div>
+<!-- 结束添加版权文字 -->
+</body>
+</html>
