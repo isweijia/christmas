@@ -70,45 +70,166 @@
   <link rel="modulepreload" crossorigin href="./assets/postprocessing-vendor-Oz0s9CZI.js">
 </head>
   <body>
-    <div id="root"></div>
-<!-- 开始添加版权文字：光学居中修正版 -->
-<div style="
-  position: fixed;
-  bottom: 15px;       /* 稍微往下挪一点，减少遮挡圣诞树 */
-  left: 0; 
-  width: 100%; 
-  text-align: center; 
-  z-index: 9999; 
-  pointer-events: none; 
-  font-family: 'Songti SC', 'Noto Serif SC', 'SimSun', 'Times New Roman', serif; 
-  color: rgba(255, 255, 255, 0.95);
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
+  <!-- ==================== 艺术级·圣诞贺卡生成器 ==================== -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<!-- 1. 平时显示的底部极简落款 -->
+<div id="copyright-box" style="
+  position: fixed; bottom: 25px; left: 0; width: 100%; text-align: center; 
+  z-index: 9998; pointer-events: none;
+  font-family: 'Songti SC', 'SimSun', serif; color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 2px 10px rgba(0,0,0,1);
 ">
-  
-  <!-- 第一行：红豆生南国 敬制 -->
-  <div style="
-    font-size: 19px; 
-    letter-spacing: 6px; 
-    margin-bottom: 4px;   /* 拉近两行距离 */
-    font-weight: 500;
-    text-indent: 6px;     /* 【关键】增加左缩进，抵消右边的字间距，实现完美居中 */
-  ">
-    红豆生南国 <span style="font-size: 13px; opacity: 0.85; font-weight: 300;">敬制</span>
+  <div style="font-size: 14px; letter-spacing: 3px; opacity: 0.9;">
+    红豆生南国 · 敬制
   </div>
-
-  <!-- 第二行：版权 + 公众号 -->
-  <div style="
-    font-size: 12px; 
-    letter-spacing: 2px; 
-    opacity: 0.75; 
-    font-family: 'Microsoft YaHei', sans-serif;
-    text-indent: 2px;     /*同样平衡一下第二行的间距 */
-  ">
-    <span style="margin-right: 6px;">© 2025</span>
-    <span>公众号 · 获嘉诗词空间</span>
-  </div>
-
 </div>
-<!-- 结束添加版权文字 -->
+
+<!-- 2. 生成按钮 (设计得像一个水晶按钮) -->
+<div onclick="createArtPoster()" style="
+  position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff; padding: 8px 24px; border-radius: 50px;
+  font-size: 13px; letter-spacing: 2px; cursor: pointer; z-index: 9999;
+  backdrop-filter: blur(10px); pointer-events: auto;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); transition: all 0.3s;
+  font-family: 'Songti SC', serif;
+">
+  生成 2026 珍藏贺卡
+</div>
+
+<!-- 3. 海报展示窗口 -->
+<div id="poster-modal" style="
+  display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.96); z-index: 10000; flex-direction: column;
+  align-items: center; justify-content: center;
+">
+  <img id="final-image" style="
+    width: 85%; max-width: 450px; border-radius: 0px; /* 直角更像卡片 */
+    box-shadow: 0 10px 50px rgba(0,0,0,0.5); border: 8px solid #1a1a1a;
+  " />
+  <div style="margin-top: 20px; color: #888; font-size: 13px; letter-spacing: 1px; font-family: sans-serif;">
+    长按图片保存 · 分享这份美好
+  </div>
+  <div onclick="document.getElementById('poster-modal').style.display='none'" style="
+    margin-top: 20px; color: #fff; font-size: 30px; cursor: pointer; opacity: 0.6;
+  ">×</div>
+</div>
+
+<!-- 隐藏的二维码生成区 -->
+<div id="qrcode-container" style="display: none;"></div>
+
+<script>
+  function createArtPoster() {
+    const treeCanvas = document.querySelector('canvas');
+    if (!treeCanvas) { alert('画面加载中，请稍候...'); return; }
+
+    const cvs = document.createElement('canvas');
+    const ctx = cvs.getContext('2d');
+    const W = 1080; // 提高分辨率到 1080P，保证高清
+    const H = 1920;
+    cvs.width = W;
+    cvs.height = H;
+
+    // --- 1. 绘制艺术背景 ---
+    // 使用一种深邃的“午夜蓝”渐变，显得高级
+    const bg = ctx.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, '#04070e');   // 顶端近乎全黑
+    bg.addColorStop(0.5, '#0b132b'); // 中间深蓝
+    bg.addColorStop(1, '#1c2541');   // 底部稍亮
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+
+    // 加一点噪点纹理（可选，模拟纸质感，这里简化为画一个边框）
+    ctx.strokeStyle = 'rgba(212, 175, 55, 0.3)'; // 淡金色边框
+    ctx.lineWidth = 2;
+    ctx.strokeRect(30, 30, W - 60, H - 60);
+
+    // --- 2. 绘制圣诞树 (核心视觉) ---
+    // 把它放得稍微大一点，占据视觉中心
+    const sSize = Math.min(treeCanvas.width, treeCanvas.height);
+    const sx = (treeCanvas.width - sSize) / 2;
+    const sy = (treeCanvas.height - sSize) / 2;
+    
+    // 画在海报的中上部
+    const targetSize = W * 0.9; // 树的宽度占海报90%
+    const targetX = (W - targetSize) / 2;
+    const targetY = 200; // 距离顶部的位置
+    ctx.drawImage(treeCanvas, sx, sy, sSize, sSize, targetX, targetY, targetSize, targetSize);
+
+    // --- 3. 绘制文字 (排版重点) ---
+    ctx.textAlign = 'center';
+
+    // 年份：2026 (作为背景水印式的存在)
+    ctx.font = 'bold 160px "Times New Roman"';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.05)'; // 极淡的透明度
+    ctx.fillText('2026', W/2, 220);
+
+    // 祝福语区 (位于树的下方)
+    const textBaseY = targetY + targetSize + 60;
+    
+    // 主标题
+    ctx.font = '50px "Songti SC", "SimSun", serif'; // 宋体
+    ctx.fillStyle = '#fceabb'; // 香槟金
+    ctx.fillText('岁岁常欢愉 · 年年皆胜意', W/2, textBaseY);
+
+    // 副标题 (英文)
+    ctx.font = 'italic 30px "Times New Roman"';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.fillText('May you be happy and prosperous', W/2, textBaseY + 60);
+
+    // --- 4. 底部信息区 (二维码 + 公众号) ---
+    const footerY = H - 280;
+
+    // 公众号名字
+    ctx.font = '36px "Microsoft YaHei"';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText('公众号：获嘉诗词空间', W/2, footerY - 40);
+
+    // 落款
+    ctx.font = '24px "Songti SC", serif';
+    ctx.fillStyle = '#aaaaaa';
+    ctx.fillText('红豆生南国 敬制', W/2, footerY + 10);
+
+    // --- 5. 生成并绘制二维码 ---
+    const currentUrl = window.location.href; 
+    document.getElementById('qrcode-container').innerHTML = '';
+    
+    new QRCode(document.getElementById('qrcode-container'), {
+      text: currentUrl,
+      width: 200, height: 200, // 高清二维码
+      colorDark : "#000000", colorLight : "#ffffff",
+      correctLevel : QRCode.CorrectLevel.H
+    });
+
+    setTimeout(() => {
+      const qrImg = document.getElementById('qrcode-container').querySelector('img');
+      if (qrImg) {
+        // 绘制二维码底座 (带一点阴影的白卡片)
+        const qrSize = 180;
+        const qrX = (W - qrSize) / 2;
+        const qrY = H - 240; // 放在最最下面
+        
+        ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
+        ctx.shadowBlur = 20;
+        ctx.fillStyle = 'white';
+        // 这里把二维码放中间稍微靠下，或者您可以选择放右下角
+        // 既然要求艺术感，我建议把二维码放最下面居中，或者文字下面
+        
+        // 修正布局：把二维码放最下面
+        const finalQrY = H - 230;
+        ctx.fillRect((W - 170)/2, finalQrY, 170, 170); // 白底
+        
+        ctx.shadowBlur = 0; // 关闭阴影画图片
+        ctx.drawImage(qrImg, (W - 150)/2, finalQrY + 10, 150, 150);
+      }
+
+      // --- 6. 完成 ---
+      const finalUrl = cvs.toDataURL('image/jpeg', 0.9);
+      document.getElementById('final-image').src = finalUrl;
+      document.getElementById('poster-modal').style.display = 'flex';
+    }, 100);
+  }
+</script>  
 </body>
 </html>
