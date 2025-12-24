@@ -6,15 +6,52 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <title>Christmas 2026</title>
     <style>
+      /* --- 1. 基础全屏设置 --- */
       html, body {
-        width: 100vw; height: 100vh; margin: 0; padding: 0;
+        width: 100%; height: 100%; margin: 0; padding: 0;
         overflow: hidden; background-color: #000;
         position: fixed; top: 0; left: 0;
       }
-      #root, canvas {
-        width: 100% !important; height: 100% !important;
-        position: absolute; top: 0; left: 0; z-index: 1;
+      #root { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
+
+      /* --- 2. 强制修复“素颜”问题 (关键!) --- */
+      /* 让背景视频铺满全屏，不要缩在角落 */
+      video {
+        position: absolute !important;
+        top: 0; left: 0;
+        width: 100% !important; 
+        height: 100% !important;
+        object-fit: cover !important;
+        z-index: 0 !important;
       }
+      
+      /* 让圣诞树覆盖在视频上面 */
+      canvas { 
+        position: absolute !important;
+        top: 0; left: 0;
+        width: 100% !important; 
+        height: 100% !important; 
+        z-index: 10 !important;
+        outline: none;
+      }
+
+      /* 隐藏原本丑陋的上传按钮，用我们漂亮的新按钮代替 */
+      input[type="file"] {
+        display: none !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+      }
+
+      /* --- 3. UI 按钮样式 --- */
+      .ui-btn {
+        background: rgba(255, 255, 255, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: #fff; padding: 8px 20px; border-radius: 50px;
+        font-size: 13px; letter-spacing: 1px; cursor: pointer;
+        backdrop-filter: blur(5px); display: flex; align-items: center; gap: 5px;
+        transition: all 0.2s;
+      }
+      .ui-btn:active { transform: scale(0.95); background: rgba(255,255,255,0.3); }
     </style>
     <script type="module" crossorigin src="./assets/index-CMoh9Od5.js"></script>
     <link rel="modulepreload" crossorigin href="./assets/react-vendor-Bzgz95E1.js">
@@ -22,47 +59,63 @@
     <link rel="modulepreload" crossorigin href="./assets/postprocessing-vendor-Oz0s9CZI.js">
   </head>
   <body>
+    <!-- React 挂载点 -->
     <div id="root"></div>
+    <!-- ⚠️ 确保路径正确 -->
 
+    <!-- ==================== 控制层 ==================== -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-    <!-- 公众号 -->
-    <div style="position: fixed; bottom: 20px; width: 100%; text-align: center; color: rgba(255,255,255,0.5); font-size: 12px; z-index: 998; pointer-events: none;">
+    <!-- 公众号 (最底层文字) -->
+    <div style="position: fixed; bottom: 20px; width: 100%; text-align: center; color: rgba(255,255,255,0.5); font-size: 12px; z-index: 998; pointer-events: none; font-family: sans-serif;">
       公众号 · 获嘉诗词空间
     </div>
 
-    <!-- 按钮 -->
-    <div style="position: fixed; bottom: 60px; width: 100%; display: flex; justify-content: center; gap: 40px; z-index: 999;">
-      <div onclick="document.querySelector('input[type=file]').click()" style="color: #fff; font-size: 16px; cursor: pointer; text-shadow: 0 2px 5px #000;">
-        🎁 挂照片
+    <!-- 操作按钮 (挂照片 + 贺卡) -->
+    <div style="position: fixed; bottom: 60px; width: 100%; display: flex; justify-content: center; gap: 30px; z-index: 999;">
+      <!-- 挂照片：点击后自动触发原本隐藏的 input -->
+      <div class="ui-btn" onclick="triggerOriginalUpload()">
+        📸 挂照片
       </div>
-      <div onclick="createPoster()" style="color: #fceabb; font-size: 16px; cursor: pointer; font-weight: bold; text-shadow: 0 2px 5px #000;">
+      <!-- 生成贺卡 -->
+      <div class="ui-btn" onclick="createPoster()" style="color: #fceabb; border-color: rgba(212, 175, 55, 0.4); font-weight: bold;">
         ✨ 生成贺卡
       </div>
     </div>
 
-    <!-- 弹窗 -->
-    <div id="poster-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 10000; flex-direction: column; align-items: center; justify-content: center;">
-      <img id="final-image" style="width: 85%; max-width: 450px; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.5);" />
-      <div onclick="document.getElementById('poster-modal').style.display='none'" style="margin-top: 30px; color: #fff; font-size: 30px;">×</div>
+    <!-- 海报弹窗 -->
+    <div id="poster-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.96); z-index: 10000; flex-direction: column; align-items: center; justify-content: center;">
+      <img id="final-image" style="width: 85%; max-width: 450px; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.6);" />
+      <div onclick="document.getElementById('poster-modal').style.display='none'" style="margin-top: 30px; color: #fff; font-size: 30px; cursor: pointer;">×</div>
     </div>
 
     <div id="qrcode-container" style="display: none;"></div>
 
     <script>
+      // === 核心修复逻辑 ===
+      
+      // 1. 触发原本的上传功能 (帮您点那个被隐藏的丑按钮)
+      function triggerOriginalUpload() {
+        const fileInput = document.querySelector('input[type="file"]');
+        if (fileInput) {
+          fileInput.click();
+        } else {
+          alert("正在初始化相机，请稍后点击...");
+        }
+      }
+
+      // 2. 生成海报逻辑 (保持完美版)
       function createPoster() {
         const treeCanvas = document.querySelector('canvas');
-        if (!treeCanvas) { alert('加载中...'); return; }
+        if (!treeCanvas) { alert('画面加载中...'); return; }
 
         const cvs = document.createElement('canvas');
         const ctx = cvs.getContext('2d');
         const W = 1080; const H = 1920; 
         cvs.width = W; cvs.height = H;
 
-        // 背景
-        ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = '#050505'; ctx.fillRect(0, 0, W, H);
         
-        // 树
         const sW = treeCanvas.width;
         const sH = treeCanvas.height;
         const scale = Math.max(W/sW, H/sH);
@@ -70,23 +123,21 @@
         const dy = (H - sH * scale) / 2;
         ctx.drawImage(treeCanvas, dx, dy, sW * scale, sH * scale);
 
-        // 遮罩
         const gradient = ctx.createLinearGradient(0, H - 700, 0, H);
         gradient.addColorStop(0, 'rgba(0,0,0,0)');
         gradient.addColorStop(1, '#000');
         ctx.fillStyle = gradient;
         ctx.fillRect(0, H - 700, W, 700);
 
-        // 文字
         ctx.textAlign = 'center';
         ctx.font = 'bold 180px "Times New Roman"';
         ctx.fillStyle = 'rgba(255,255,255,0.06)';
         ctx.fillText('2026', W/2, H - 480);
+
         ctx.font = '50px "Songti SC", serif';
         ctx.fillStyle = '#fceabb';
         ctx.fillText("岁岁常欢愉，年年皆胜意", W/2, H - 400);
 
-        // 二维码逻辑 (稳健版)
         const container = document.getElementById('qrcode-container');
         container.innerHTML = '';
         new QRCode(container, {
@@ -95,35 +146,20 @@
           correctLevel : QRCode.CorrectLevel.L
         });
 
-        // 轮询检测图片
-        let attempts = 0;
-        const checkInterval = setInterval(() => {
+        setTimeout(() => {
           const qrImg = container.querySelector('img');
-          if (qrImg && qrImg.src) {
-            clearInterval(checkInterval);
-            // 确保加载完再画
-            if (qrImg.complete) { draw(qrImg); } 
-            else { qrImg.onload = () => draw(qrImg); }
-          }
-          if (++attempts > 50) { clearInterval(checkInterval); alert("二维码生成超时"); }
-        }, 50);
-
-        function draw(qrImg) {
+          if (qrImg) {
             const qrCenterY = H - 220;
-            // 装饰球
             ctx.fillStyle = '#b32020'; ctx.beginPath(); ctx.arc(W/2, qrCenterY, 95, 0, Math.PI * 2); ctx.fill();
             ctx.strokeStyle = '#d4af37'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(W/2, qrCenterY - 95); ctx.lineTo(W/2, qrCenterY - 300); ctx.stroke();
-            // 白底
             ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(W/2, qrCenterY, 80, 0, Math.PI * 2); ctx.fill();
-            // 二维码
             ctx.drawImage(qrImg, (W - 130)/2, qrCenterY - 65, 130, 130);
-            // 公众号
             ctx.font = '30px "Microsoft YaHei"'; ctx.fillStyle = '#fff';
             ctx.fillText('公众号 · 获嘉诗词空间', W/2, H - 60);
-
-            document.getElementById('final-image').src = cvs.toDataURL('image/jpeg', 0.9);
-            document.getElementById('poster-modal').style.display = 'flex';
-        }
+          }
+          document.getElementById('final-image').src = cvs.toDataURL('image/jpeg', 0.9);
+          document.getElementById('poster-modal').style.display = 'flex';
+        }, 100);
       }
     </script>
   </body>
