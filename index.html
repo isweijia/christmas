@@ -6,52 +6,45 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <title>Christmas 2026</title>
     <style>
-      /* --- 1. 基础全屏设置 --- */
+      /* --- 核心修复：层级与全屏 --- */
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      
       html, body {
-        width: 100%; height: 100%; margin: 0; padding: 0;
+        width: 100vw; height: 100vh;
         overflow: hidden; background-color: #000;
         position: fixed; top: 0; left: 0;
       }
-      #root { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
 
-      /* --- 2. 强制修复“素颜”问题 (关键!) --- */
-      /* 让背景视频铺满全屏，不要缩在角落 */
+      /* 容器层级 */
+      #root {
+        width: 100%; height: 100%;
+        position: absolute; top: 0; left: 0;
+        z-index: 1;
+      }
+
+      /* 圣诞树画布：强制最顶层显示 */
+      canvas {
+        display: block !important;
+        width: 100% !important; 
+        height: 100% !important;
+        position: absolute !important;
+        top: 0; left: 0;
+        z-index: 10 !important; /* 关键：确保在视频之上 */
+        opacity: 1 !important;
+      }
+
+      /* 背景视频：底层 */
       video {
         position: absolute !important;
         top: 0; left: 0;
-        width: 100% !important; 
-        height: 100% !important;
+        width: 100% !important; height: 100% !important;
         object-fit: cover !important;
-        z-index: 0 !important;
-      }
-      
-      /* 让圣诞树覆盖在视频上面 */
-      canvas { 
-        position: absolute !important;
-        top: 0; left: 0;
-        width: 100% !important; 
-        height: 100% !important; 
-        z-index: 10 !important;
-        outline: none;
+        z-index: 0 !important; /* 关键：放在最底下 */
+        opacity: 0.6 !important;
       }
 
-      /* 隐藏原本丑陋的上传按钮，用我们漂亮的新按钮代替 */
-      input[type="file"] {
-        display: none !important;
-        opacity: 0 !important;
-        pointer-events: none !important;
-      }
-
-      /* --- 3. UI 按钮样式 --- */
-      .ui-btn {
-        background: rgba(255, 255, 255, 0.15);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        color: #fff; padding: 8px 20px; border-radius: 50px;
-        font-size: 13px; letter-spacing: 1px; cursor: pointer;
-        backdrop-filter: blur(5px); display: flex; align-items: center; gap: 5px;
-        transition: all 0.2s;
-      }
-      .ui-btn:active { transform: scale(0.95); background: rgba(255,255,255,0.3); }
+      /* 隐藏自带按钮 */
+      input[type="file"] { display: none !important; }
     </style>
     <script type="module" crossorigin src="./assets/index-CMoh9Od5.js"></script>
     <link rel="modulepreload" crossorigin href="./assets/react-vendor-Bzgz95E1.js">
@@ -61,105 +54,146 @@
   <body>
     <!-- React 挂载点 -->
     <div id="root"></div>
-    <!-- ⚠️ 确保路径正确 -->
 
-    <!-- ==================== 控制层 ==================== -->
+    <!-- ==================== UI 控制层 ==================== -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-    <!-- 公众号 (最底层文字) -->
-    <div style="position: fixed; bottom: 20px; width: 100%; text-align: center; color: rgba(255,255,255,0.5); font-size: 12px; z-index: 998; pointer-events: none; font-family: sans-serif;">
+    <!-- 底部公众号 (最顶层文字) -->
+    <div style="
+      position: fixed; bottom: 20px; width: 100%; text-align: center;
+      color: rgba(255,255,255,0.5); font-size: 12px; z-index: 9999; pointer-events: none;
+      font-family: sans-serif;
+    ">
       公众号 · 获嘉诗词空间
     </div>
 
-    <!-- 操作按钮 (挂照片 + 贺卡) -->
-    <div style="position: fixed; bottom: 60px; width: 100%; display: flex; justify-content: center; gap: 30px; z-index: 999;">
-      <!-- 挂照片：点击后自动触发原本隐藏的 input -->
-      <div class="ui-btn" onclick="triggerOriginalUpload()">
-        📸 挂照片
+    <!-- 操作按钮区 -->
+    <div style="
+      position: fixed; bottom: 60px; width: 100%; display: flex; justify-content: center; gap: 40px; 
+      z-index: 9999; pointer-events: none;
+    ">
+      <!-- 挂照片 -->
+      <div onclick="document.querySelector('input[type=file]').click()" style="
+        color: #fff; font-size: 16px; cursor: pointer; text-shadow: 0 2px 5px #000;
+        pointer-events: auto; display: flex; align-items: center; gap: 5px;
+      ">
+        🎁 挂照片
       </div>
       <!-- 生成贺卡 -->
-      <div class="ui-btn" onclick="createPoster()" style="color: #fceabb; border-color: rgba(212, 175, 55, 0.4); font-weight: bold;">
+      <div onclick="createPoster()" style="
+        color: #fceabb; font-size: 16px; cursor: pointer; font-weight: bold; text-shadow: 0 2px 5px #000;
+        pointer-events: auto; display: flex; align-items: center; gap: 5px;
+      ">
         ✨ 生成贺卡
       </div>
     </div>
 
     <!-- 海报弹窗 -->
-    <div id="poster-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.96); z-index: 10000; flex-direction: column; align-items: center; justify-content: center;">
+    <div id="poster-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.96); z-index: 100000; flex-direction: column; align-items: center; justify-content: center;">
       <img id="final-image" style="width: 85%; max-width: 450px; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.6);" />
-      <div onclick="document.getElementById('poster-modal').style.display='none'" style="margin-top: 30px; color: #fff; font-size: 30px; cursor: pointer;">×</div>
+      <div style="color: #666; margin-top: 15px; font-size: 13px;">长按保存 · 分享 2026 祝福</div>
+      <div onclick="document.getElementById('poster-modal').style.display='none'" style="margin-top: 25px; color: #fff; font-size: 30px; cursor: pointer; width: 40px; height: 40px; line-height: 40px; text-align: center; border: 1px solid #444; border-radius: 50%;">×</div>
     </div>
 
     <div id="qrcode-container" style="display: none;"></div>
 
     <script>
-      // === 核心修复逻辑 ===
-      
-      // 1. 触发原本的上传功能 (帮您点那个被隐藏的丑按钮)
-      function triggerOriginalUpload() {
-        const fileInput = document.querySelector('input[type="file"]');
-        if (fileInput) {
-          fileInput.click();
-        } else {
-          alert("正在初始化相机，请稍后点击...");
-        }
-      }
+      const msgs = ["岁岁常欢愉，年年皆胜意", "凛冬散尽，星河长明", "所求皆如愿，所行化坦途"];
 
-      // 2. 生成海报逻辑 (保持完美版)
       function createPoster() {
-        const treeCanvas = document.querySelector('canvas');
-        if (!treeCanvas) { alert('画面加载中...'); return; }
-
-        const cvs = document.createElement('canvas');
-        const ctx = cvs.getContext('2d');
-        const W = 1080; const H = 1920; 
-        cvs.width = W; cvs.height = H;
-
-        ctx.fillStyle = '#050505'; ctx.fillRect(0, 0, W, H);
+        // 尝试多种方式获取画布，确保万无一失
+        const treeCanvas = document.querySelector('canvas') || document.getElementById('root').querySelector('canvas');
         
-        const sW = treeCanvas.width;
-        const sH = treeCanvas.height;
-        const scale = Math.max(W/sW, H/sH);
-        const dx = (W - sW * scale) / 2;
-        const dy = (H - sH * scale) / 2;
-        ctx.drawImage(treeCanvas, dx, dy, sW * scale, sH * scale);
+        if (!treeCanvas) { 
+          alert('圣诞树还在准备中，请稍等...'); return; 
+        }
 
-        const gradient = ctx.createLinearGradient(0, H - 700, 0, H);
-        gradient.addColorStop(0, 'rgba(0,0,0,0)');
-        gradient.addColorStop(1, '#000');
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, H - 700, W, 700);
+        try {
+          const cvs = document.createElement('canvas');
+          const ctx = cvs.getContext('2d');
+          const W = 1080; const H = 1920; 
+          cvs.width = W; cvs.height = H;
 
-        ctx.textAlign = 'center';
-        ctx.font = 'bold 180px "Times New Roman"';
-        ctx.fillStyle = 'rgba(255,255,255,0.06)';
-        ctx.fillText('2026', W/2, H - 480);
+          // 1. 背景
+          ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+          
+          // 2. 绘制树 (Cover 模式铺满)
+          const sW = treeCanvas.width;
+          const sH = treeCanvas.height;
+          const scale = Math.max(W/sW, H/sH);
+          const dx = (W - sW * scale) / 2;
+          const dy = (H - sH * scale) / 2;
+          ctx.drawImage(treeCanvas, dx, dy, sW * scale, sH * scale);
 
-        ctx.font = '50px "Songti SC", serif';
-        ctx.fillStyle = '#fceabb';
-        ctx.fillText("岁岁常欢愉，年年皆胜意", W/2, H - 400);
+          // 3. 遮罩
+          const gradient = ctx.createLinearGradient(0, H - 700, 0, H);
+          gradient.addColorStop(0, 'rgba(0,0,0,0)');
+          gradient.addColorStop(1, '#000');
+          ctx.fillStyle = gradient;
+          ctx.fillRect(0, H - 700, W, 700);
 
-        const container = document.getElementById('qrcode-container');
-        container.innerHTML = '';
-        new QRCode(container, {
-          text: window.location.href, width: 256, height: 256,
-          colorDark : "#d4af37", colorLight : "transparent",
-          correctLevel : QRCode.CorrectLevel.L
-        });
+          // 4. 文字
+          ctx.textAlign = 'center';
+          ctx.font = 'bold 180px "Times New Roman"';
+          ctx.fillStyle = 'rgba(255,255,255,0.06)';
+          ctx.fillText('2026', W/2, H - 480);
 
-        setTimeout(() => {
-          const qrImg = container.querySelector('img');
-          if (qrImg) {
+          const txt = msgs[Math.floor(Math.random() * msgs.length)];
+          ctx.font = '50px "Songti SC", serif';
+          ctx.fillStyle = '#fceabb';
+          ctx.shadowColor = 'rgba(252, 234, 187, 0.6)'; ctx.shadowBlur = 15;
+          ctx.fillText(txt, W/2, H - 400);
+          ctx.shadowBlur = 0;
+
+          // 5. 二维码
+          const container = document.getElementById('qrcode-container');
+          container.innerHTML = '';
+          new QRCode(container, {
+            text: window.location.href, width: 256, height: 256,
+            colorDark : "#d4af37", colorLight : "transparent",
+            correctLevel : QRCode.CorrectLevel.L
+          });
+
+          // 轮询检测图片生成 (解决手机白屏)
+          let attempts = 0;
+          const checkInterval = setInterval(() => {
+            const qrImg = container.querySelector('img');
+            if (qrImg && qrImg.src) {
+              clearInterval(checkInterval);
+              // 延时一点点确保渲染
+              setTimeout(() => drawFinal(qrImg), 50);
+            }
+            if (++attempts > 40) { 
+              clearInterval(checkInterval);
+              if(qrImg) drawFinal(qrImg); // 超时也试着画一下
+            }
+          }, 50);
+
+          function drawFinal(qrImg) {
             const qrCenterY = H - 220;
-            ctx.fillStyle = '#b32020'; ctx.beginPath(); ctx.arc(W/2, qrCenterY, 95, 0, Math.PI * 2); ctx.fill();
-            ctx.strokeStyle = '#d4af37'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(W/2, qrCenterY - 95); ctx.lineTo(W/2, qrCenterY - 300); ctx.stroke();
-            ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(W/2, qrCenterY, 80, 0, Math.PI * 2); ctx.fill();
+            // 装饰球底座
+            ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 20;
+            ctx.fillStyle = '#b32020'; 
+            ctx.beginPath(); ctx.arc(W/2, qrCenterY, 95, 0, Math.PI * 2); ctx.fill();
+            // 挂绳
+            ctx.strokeStyle = '#d4af37'; ctx.lineWidth = 4;
+            ctx.beginPath(); ctx.moveTo(W/2, qrCenterY - 95); ctx.lineTo(W/2, qrCenterY - 300); ctx.stroke();
+            // 白底
+            ctx.fillStyle = '#fff'; ctx.shadowBlur = 0;
+            ctx.beginPath(); ctx.arc(W/2, qrCenterY, 80, 0, Math.PI * 2); ctx.fill();
+            // 二维码
             ctx.drawImage(qrImg, (W - 130)/2, qrCenterY - 65, 130, 130);
+            // 公众号
             ctx.font = '30px "Microsoft YaHei"'; ctx.fillStyle = '#fff';
             ctx.fillText('公众号 · 获嘉诗词空间', W/2, H - 60);
+
+            document.getElementById('final-image').src = cvs.toDataURL('image/jpeg', 0.9);
+            document.getElementById('poster-modal').style.display = 'flex';
           }
-          document.getElementById('final-image').src = cvs.toDataURL('image/jpeg', 0.9);
-          document.getElementById('poster-modal').style.display = 'flex';
-        }, 100);
+
+        } catch (e) {
+          alert('生成出错: ' + e.message);
+        }
       }
     </script>
   </body>
