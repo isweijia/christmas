@@ -33,28 +33,46 @@
     <!-- 2. 公众号名字：始终显示在底部 -->
     <div style="
       position: fixed; bottom: 20px; left: 0; width: 100%; text-align: center;
-      z-index: 999; pointer-events: none;
-      font-family: 'Microsoft YaHei', sans-serif; color: rgba(255, 255, 255, 0.6);
-      font-size: 12px; letter-spacing: 1px; text-shadow: 0 1px 2px #000;
+      z-index: 998; pointer-events: none;
+      font-family: 'Microsoft YaHei', sans-serif; color: rgba(255, 255, 255, 0.5);
+      font-size: 11px; letter-spacing: 1px;
     ">
       公众号 · 获嘉诗词空间
     </div>
 
-    <!-- 生成按钮 -->
-    <div onclick="createPoster()" style="
-      position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%);
-      background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.3);
-      color: #fff; padding: 8px 20px; border-radius: 50px;
-      font-size: 13px; letter-spacing: 1px; cursor: pointer; z-index: 1000;
-      backdrop-filter: blur(5px); pointer-events: auto;
+    <!-- 3. 双按钮操作区 (挂照片 + 生成贺卡) -->
+    <div style="
+      position: fixed; bottom: 60px; left: 0; width: 100%;
+      display: flex; justify-content: center; gap: 15px;
+      z-index: 999; pointer-events: none;
     ">
-      生成 2026 贺卡
+      
+      <!-- 左：挂照片 (自动调用上传功能) -->
+      <div onclick="document.querySelector('input[type=file]').click()" style="
+        background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.3);
+        color: #fff; padding: 8px 20px; border-radius: 50px;
+        font-size: 13px; letter-spacing: 1px; cursor: pointer; pointer-events: auto;
+        backdrop-filter: blur(5px); display: flex; align-items: center;
+      ">
+        🎁 挂照片
+      </div>
+
+      <!-- 右：生成贺卡 -->
+      <div onclick="createPoster()" style="
+        background: rgba(212, 175, 55, 0.2); border: 1px solid rgba(212, 175, 55, 0.4);
+        color: #fceabb; padding: 8px 20px; border-radius: 50px;
+        font-size: 13px; letter-spacing: 1px; cursor: pointer; pointer-events: auto;
+        backdrop-filter: blur(5px); display: flex; align-items: center; font-weight: bold;
+      ">
+        ✨ 生成贺卡
+      </div>
+
     </div>
 
     <!-- 海报弹窗 -->
     <div id="poster-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.96); z-index: 10001; flex-direction: column; align-items: center; justify-content: center;">
       <img id="final-image" style="width: 85%; max-width: 450px; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.6);" />
-      <div style="color: #666; margin-top: 15px; font-size: 12px;">长按保存 · 分享祝福</div>
+      <div style="color: #666; margin-top: 15px; font-size: 12px;">长按保存 · 分享 2026 祝福</div>
       <div onclick="document.getElementById('poster-modal').style.display='none'" style="margin-top: 20px; color: #fff; font-size: 30px; cursor: pointer; opacity: 0.6;">×</div>
     </div>
 
@@ -78,7 +96,6 @@
         // 树 (拉伸铺满)
         const sW = treeCanvas.width;
         const sH = treeCanvas.height;
-        // 使用 cover 模式填充
         const scale = Math.max(W/sW, H/sH);
         const dx = (W - sW * scale) / 2;
         const dy = (H - sH * scale) / 2;
@@ -118,21 +135,21 @@
           if (qrImg) {
             const qrCenterY = H - 220;
             
-            // 3. 卡通圣诞球底座 (画一个红色的装饰球背景)
+            // 卡通圣诞球底座 (红色)
             ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 20;
-            ctx.fillStyle = '#b32020'; // 圣诞红
+            ctx.fillStyle = '#b32020'; 
             ctx.beginPath();
             ctx.arc(W/2, qrCenterY, 95, 0, Math.PI * 2);
             ctx.fill();
 
-            // 画一个挂绳
+            // 挂绳 (金色)
             ctx.strokeStyle = '#d4af37'; ctx.lineWidth = 4;
             ctx.beginPath();
             ctx.moveTo(W/2, qrCenterY - 95);
             ctx.lineTo(W/2, qrCenterY - 300); // 连到上面
             ctx.stroke();
 
-            // 绘制白色圆底 (放二维码)
+            // 白色圆底 (放二维码)
             ctx.fillStyle = '#fff';
             ctx.beginPath();
             ctx.arc(W/2, qrCenterY, 80, 0, Math.PI * 2);
