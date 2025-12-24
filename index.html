@@ -1,204 +1,97 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Grand Luxury Interactive Christmas Tree</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Christmas Tree 2026</title>
+    <!-- 1. 救命样式：强制铺满屏幕 -->
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
-      
-      body, html {
-        margin: 0;
-        padding: 0;
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-        background-color: #020402; /* Deepest Green/Black */
+      html, body, #root {
+        width: 100%; height: 100%; margin: 0; padding: 0;
+        overflow: hidden; background-color: #000;
       }
-      
-      /* Photo overlay animations */
-      
-      @keyframes fadeIn {
-        from {
-          opacity: 0;
-        }
-        to {
-          opacity: 1;
-        }
-      }
-      
-      @keyframes scaleIn {
-        from {
-          transform: scale(0.8);
-          opacity: 0;
-        }
-        to {
-          transform: scale(1);
-          opacity: 1;
-        }
-      }
-      
-      .animate-fade-in {
-        animation: fadeIn 0.3s ease-out;
-      }
-      
-      .animate-scale-in {
-        animation: scaleIn 0.4s ease-out;
-      }
+      canvas { display: block; width: 100%; height: 100%; }
     </style>
-
-<link rel="stylesheet" href="/index.css">
-  <script type="importmap">
-{
-  "imports": {
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "@react-three/fiber": "https://aistudiocdn.com/@react-three/fiber@^9.4.0",
-    "three": "https://aistudiocdn.com/three@^0.181.2",
-    "@react-three/postprocessing": "https://aistudiocdn.com/@react-three/postprocessing@^3.0.4",
-    "@react-three/drei": "https://aistudiocdn.com/@react-three/drei@^10.7.7",
-    "postprocessing": "https://aistudiocdn.com/postprocessing@^6.38.0",
-    "@mediapipe/tasks-vision": "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/+esm"
-  }
-}
-</script>
-  <script type="module" crossorigin src="./assets/index-Ce6zfXP4.js"></script>
-  <link rel="modulepreload" crossorigin href="./assets/react-vendor-Bzgz95E1.js">
-  <link rel="modulepreload" crossorigin href="./assets/three-vendor-IWongE37.js">
-  <link rel="modulepreload" crossorigin href="./assets/postprocessing-vendor-Oz0s9CZI.js">
-</head>
+  </head>
   <body>
- <!-- ==================== 最终版·贺卡生成器 ==================== -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
-<!-- 1. 底部极简落款 -->
-<div id="copyright-box" style="
-  position: fixed; bottom: 25px; left: 0; width: 100%; text-align: center; 
-  z-index: 9998; pointer-events: none;
-  font-family: 'Songti SC', 'SimSun', serif; color: rgba(255, 255, 255, 0.85);
-  text-shadow: 0 2px 10px rgba(0,0,0,1);
-">
-  <div style="font-size: 14px; letter-spacing: 3px; opacity: 0.9;">
-    红豆生南国 · 敬制
-  </div>
-</div>
-
-<!-- 2. 生成按钮 (名字已改为：生成贺卡) -->
-<div onclick="createArtPoster()" style="
-  position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
-  background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.4);
-  color: #fff; padding: 8px 30px; border-radius: 50px;
-  font-size: 14px; letter-spacing: 2px; cursor: pointer; z-index: 9999;
-  backdrop-filter: blur(10px); pointer-events: auto;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); font-weight: bold;
-">
-  生成贺卡
-</div>
-
-<!-- 3. 海报展示窗口 -->
-<div id="poster-modal" style="
-  display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(0,0,0,0.96); z-index: 10000; flex-direction: column;
-  align-items: center; justify-content: center;
-">
-  <!-- 提示文字 -->
-  <div style="color: #ccc; margin-bottom: 15px; font-size: 13px; letter-spacing: 1px;">
-    长按图片保存 · 分享给朋友
-  </div>
-  
-  <img id="final-image" style="
-    width: 82%; max-width: 450px; border: 1px solid #333;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-  " />
-  
-  <div onclick="document.getElementById('poster-modal').style.display='none'" style="
-    margin-top: 25px; color: #fff; font-size: 30px; cursor: pointer; opacity: 0.7;
-    width: 50px; height: 50px; line-height: 45px; text-align: center;
-    border: 1px solid #555; border-radius: 50%;
-  ">×</div>
-</div>
-
-<div id="qrcode-container" style="display: none;"></div>
-
-<script>
-  function createArtPoster() {
-    const treeCanvas = document.querySelector('canvas');
-    if (!treeCanvas) { alert('请稍等，画面加载中...'); return; }
-
-    const cvs = document.createElement('canvas');
-    const ctx = cvs.getContext('2d');
-    const W = 1080; 
-    const H = 1920;
-    cvs.width = W;
-    cvs.height = H;
-
-    // 1. 背景
-    const bg = ctx.createLinearGradient(0, 0, 0, H);
-    bg.addColorStop(0, '#020408'); 
-    bg.addColorStop(1, '#111827');
-    ctx.fillStyle = bg;
-    ctx.fillRect(0, 0, W, H);
-
-    // 2. 绘制圣诞树 (核心)
-    // 如果这里之前的海报是空的，说明需要执行第二步操作（修改App.tsx）
-    const sSize = Math.min(treeCanvas.width, treeCanvas.height);
-    const sx = (treeCanvas.width - sSize) / 2;
-    const sy = (treeCanvas.height - sSize) / 2;
-    // 放大一点，位置上移
-    ctx.drawImage(treeCanvas, sx, sy, sSize, sSize, -50, 100, W+100, W+100);
-
-    // 3. 文字
-    ctx.textAlign = 'center';
-
-    // 2026 背景水印
-    ctx.font = 'bold 200px "Times New Roman"';
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
-    ctx.fillText('2026', W/2, 300);
-
-    // 主祝福语
-    const textY = 1350;
-    ctx.font = '50px "Songti SC", "SimSun", serif';
-    ctx.fillStyle = '#fceabb'; 
-    ctx.fillText('岁岁常欢愉 · 年年皆胜意', W/2, textY);
-
-    ctx.font = 'italic 30px "Times New Roman"';
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-    ctx.fillText('Merry Christmas & Happy New Year', W/2, textY + 60);
-
-    // 4. 二维码区域
-    const footerY = H - 260;
-    const currentUrl = window.location.href; 
-    document.getElementById('qrcode-container').innerHTML = '';
+    <!-- 2. 关键：圣诞树的家 (绝对不能少) -->
+    <div id="root"></div>
     
-    new QRCode(document.getElementById('qrcode-container'), {
-      text: currentUrl, width: 200, height: 200,
-      colorDark : "#000000", colorLight : "#ffffff",
-      correctLevel : QRCode.CorrectLevel.H
-    });
+    <!-- 3. 启动程序的脚本 -->
+    <script type="module" src="/src/main.tsx"></script>
 
-    setTimeout(() => {
-      const qrImg = document.getElementById('qrcode-container').querySelector('img');
-      if (qrImg) {
-        // 白底
-        ctx.fillStyle = 'white';
-        ctx.fillRect((W - 180)/2, footerY, 180, 180);
+    <!-- ==================== 下面是贺卡生成器 ==================== -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <!-- 底部落款 -->
+    <div id="copyright-box" style="position: fixed; bottom: 25px; left: 0; width: 100%; text-align: center; z-index: 9998; pointer-events: none; color: rgba(255, 255, 255, 0.85); text-shadow: 0 2px 10px rgba(0,0,0,1);">
+      <div style="font-family: 'Songti SC', serif; font-size: 14px; letter-spacing: 3px; opacity: 0.9;">红豆生南国 · 敬制</div>
+    </div>
+
+    <!-- 生成按钮 -->
+    <div onclick="createArtPoster()" style="position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.4); color: #fff; padding: 8px 30px; border-radius: 50px; font-size: 14px; letter-spacing: 2px; cursor: pointer; z-index: 9999; backdrop-filter: blur(10px); pointer-events: auto; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); font-weight: bold;">
+      生成贺卡
+    </div>
+
+    <!-- 海报弹窗 -->
+    <div id="poster-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.96); z-index: 10000; flex-direction: column; align-items: center; justify-content: center;">
+      <div style="color: #ccc; margin-bottom: 15px; font-size: 13px;">长按图片保存 · 分享给朋友</div>
+      <img id="final-image" style="width: 82%; max-width: 450px; border: 1px solid #333; box-shadow: 0 20px 60px rgba(0,0,0,0.6);" />
+      <div onclick="document.getElementById('poster-modal').style.display='none'" style="margin-top: 25px; color: #fff; font-size: 30px; cursor: pointer; opacity: 0.7; width: 50px; height: 50px; line-height: 45px; text-align: center; border: 1px solid #555; border-radius: 50%;">×</div>
+    </div>
+
+    <div id="qrcode-container" style="display: none;"></div>
+
+    <script>
+      function createArtPoster() {
+        const treeCanvas = document.querySelector('canvas');
+        if (!treeCanvas) { alert('请稍等，画面加载中...'); return; }
+        const cvs = document.createElement('canvas');
+        const ctx = cvs.getContext('2d');
+        const W = 1080; const H = 1920;
+        cvs.width = W; cvs.height = H;
+
+        // 背景
+        const bg = ctx.createLinearGradient(0, 0, 0, H);
+        bg.addColorStop(0, '#020408'); bg.addColorStop(1, '#111827');
+        ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+
+        // 圣诞树
+        const sSize = Math.min(treeCanvas.width, treeCanvas.height);
+        const sx = (treeCanvas.width - sSize) / 2;
+        const sy = (treeCanvas.height - sSize) / 2;
+        ctx.drawImage(treeCanvas, sx, sy, sSize, sSize, -50, 100, W+100, W+100);
+
+        // 文字
+        ctx.textAlign = 'center';
+        ctx.font = 'bold 200px "Times New Roman"'; ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
+        ctx.fillText('2026', W/2, 300);
+
+        const textY = 1350;
+        ctx.font = '50px "Songti SC", "SimSun", serif'; ctx.fillStyle = '#fceabb';
+        ctx.fillText('岁岁常欢愉 · 年年皆胜意', W/2, textY);
+        ctx.font = 'italic 30px "Times New Roman"'; ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.fillText('Merry Christmas & Happy New Year', W/2, textY + 60);
+
         // 二维码
-        ctx.drawImage(qrImg, (W - 160)/2, footerY + 10, 160, 160);
-        
-        // 公众号
-        ctx.font = '32px "Microsoft YaHei"';
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText('公众号：获嘉诗词空间', W/2, footerY - 50);
+        const footerY = H - 260;
+        document.getElementById('qrcode-container').innerHTML = '';
+        new QRCode(document.getElementById('qrcode-container'), {
+          text: window.location.href, width: 200, height: 200, colorDark : "#000000", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.H
+        });
+        setTimeout(() => {
+          const qrImg = document.getElementById('qrcode-container').querySelector('img');
+          if (qrImg) {
+            ctx.fillStyle = 'white'; ctx.fillRect((W - 180)/2, footerY, 180, 180);
+            ctx.drawImage(qrImg, (W - 160)/2, footerY + 10, 160, 160);
+            ctx.font = '32px "Microsoft YaHei"'; ctx.fillStyle = '#ffffff';
+            ctx.fillText('公众号：获嘉诗词空间', W/2, footerY - 50);
+          }
+          document.getElementById('final-image').src = cvs.toDataURL('image/jpeg', 0.9);
+          document.getElementById('poster-modal').style.display = 'flex';
+        }, 100);
       }
-
-      const finalUrl = cvs.toDataURL('image/jpeg', 0.9);
-      document.getElementById('final-image').src = finalUrl;
-      document.getElementById('poster-modal').style.display = 'flex';
-    }, 100);
-  }
-</script>
- 
-</body>
+    </script>
+  </body>
 </html>
