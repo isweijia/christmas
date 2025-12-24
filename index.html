@@ -2,20 +2,16 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <!-- 修复手机显示不全的问题：禁止缩放，强制全屏 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <title>Christmas 2026</title>
     <style>
-      /* 修复手机端高度问题，使用固定定位铺满 */
       html, body {
-        width: 100%; height: 100%; margin: 0; padding: 0;
+        width: 100vw; height: 100vh; margin: 0; padding: 0;
         overflow: hidden; background-color: #000;
-        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        position: fixed; top: 0; left: 0;
       }
-      #root {
-        width: 100%; height: 100%;
-      }
+      #root { width: 100%; height: 100%; }
       canvas { display: block; width: 100%; height: 100%; outline: none; }
     </style>
     <script type="module" crossorigin src="./assets/index-CVRyuv3a.js"></script>
@@ -24,158 +20,116 @@
     <link rel="modulepreload" crossorigin href="./assets/postprocessing-vendor-Oz0s9CZI.js">
   </head>
   <body>
-    <!-- 3D 场景容器 -->
     <div id="root"></div>
-    
-    <!-- ⚠️ 注意：这里已经帮您改好了路径 ./index.tsx -->
 
-    <!-- ==================== 旗舰版·海报生成系统 ==================== -->
+    <!-- ==================== 彩色二维码海报系统 ==================== -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-    <!-- 1. 平时显示的底部落款 (极简模式) -->
-    <div id="ui-layer" style="position: absolute; bottom: 30px; left: 0; width: 100%; text-align: center; pointer-events: none; z-index: 100;">
-      <div style="font-family: 'Songti SC', serif; color: rgba(255,255,255,0.7); font-size: 12px; letter-spacing: 2px; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">
-        红豆生南国 · 敬制
-      </div>
-    </div>
-
-    <!-- 2. 生成按钮 -->
+    <!-- 按钮 -->
     <div onclick="createPoster()" style="
-      position: absolute; bottom: 70px; left: 50%; transform: translateX(-50%);
-      background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.3);
-      color: #fff; padding: 10px 25px; border-radius: 50px;
-      font-size: 14px; letter-spacing: 2px; cursor: pointer; z-index: 101;
+      position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.25);
+      color: rgba(255, 255, 255, 0.95); padding: 8px 24px; border-radius: 50px;
+      font-size: 14px; letter-spacing: 2px; cursor: pointer; z-index: 999;
       backdrop-filter: blur(8px); pointer-events: auto;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-family: sans-serif;
     ">
-      生成祝福海报
+      生成 2026 贺卡
     </div>
 
-    <!-- 3. 海报弹窗 -->
-    <div id="poster-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; flex-direction: column; align-items: center; justify-content: center;">
-      <img id="final-image" style="width: 85%; max-width: 450px; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.5);" />
-      <div style="color: #888; margin-top: 15px; font-size: 13px;">长按保存图片 · 传递 2026 祝福</div>
-      <div onclick="document.getElementById('poster-modal').style.display='none'" style="margin-top: 20px; color: #fff; font-size: 24px; width: 40px; height: 40px; text-align: center; line-height: 38px; border: 1px solid #555; border-radius: 50%;">×</div>
+    <!-- 弹窗 -->
+    <div id="poster-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.96); z-index: 10000; flex-direction: column; align-items: center; justify-content: center;">
+      <img id="final-image" style="width: 85%; max-width: 450px; border-radius: 6px; box-shadow: 0 10px 50px rgba(0,0,0,0.6);" />
+      <div style="color: #666; margin-top: 15px; font-size: 13px;">长按保存 · 分享美好</div>
+      <div onclick="document.getElementById('poster-modal').style.display='none'" style="margin-top: 25px; color: #fff; font-size: 30px; cursor: pointer; opacity: 0.6; width: 40px; height: 40px; line-height: 40px; text-align: center; border: 1px solid #444; border-radius: 50%;">×</div>
     </div>
 
     <div id="qrcode-container" style="display: none;"></div>
 
     <script>
-      // === 唯美祝福语库 (随机抽取) ===
-      const blessings = [
-        { cn: "岁岁常欢愉，年年皆胜意", en: "Joy in every year, victory in every age." },
-        { cn: "凛冬散尽，星河长明", en: "Winter fades, the galaxy shines forever." },
-        { cn: "前路浩浩荡荡，万物皆可期待", en: "The road ahead is vast and promising." },
-        { cn: "愿所得皆所期，所失亦无碍", en: "May you get what you wish for." },
-        { cn: "多喜乐，长安宁", en: "Joy and peace, always." },
-        { cn: "保持热爱，奔赴山海", en: "Keep loving, go for mountains and seas." },
-        { cn: "烟火向星辰，所愿皆成真", en: "Fireworks to stars, wishes come true." },
-        { cn: "万事顺遂，毫无蹉跎", en: "Everything goes well, no time wasted." },
-        { cn: "家人闲坐，灯火可亲", en: "Family sitting together, lights are warm." },
-        { cn: "且将新火试新茶，诗酒趁年华", en: "Enjoy the prime of life." }
+      const msgs = [
+        "岁岁常欢愉，年年皆胜意", "凛冬散尽，星河长明", "所求皆如愿，所行化坦途",
+        "家人闲坐，灯火可亲", "前路浩浩荡荡，万物皆可期待"
       ];
 
       function createPoster() {
         const treeCanvas = document.querySelector('canvas');
-        if (!treeCanvas) { alert('画面加载中...'); return; }
+        if (!treeCanvas) { alert('加载中...'); return; }
 
         const cvs = document.createElement('canvas');
         const ctx = cvs.getContext('2d');
-        const W = 1080; 
-        const H = 1920; 
+        const W = 1080; const H = 1920; 
         cvs.width = W; cvs.height = H;
 
-        // 1. 绘制背景 (圣诞树全屏铺满)
-        ctx.fillStyle = '#000';
-        ctx.fillRect(0, 0, W, H);
+        // 1. 背景
+        ctx.fillStyle = '#050505'; ctx.fillRect(0, 0, W, H);
         
-        // 计算居中裁剪 (Cover模式)
+        // 2. 树 (放大铺满)
         const sW = treeCanvas.width;
         const sH = treeCanvas.height;
-        const scale = Math.max(W / sW, H / sH);
-        const x = (W - sW * scale) / 2;
-        const y = (H - sH * scale) / 2;
-        ctx.drawImage(treeCanvas, x, y, sW * scale, sH * scale);
+        const scale = Math.max(W/sW, H/sH) * 1.05; 
+        const dx = (W - sW * scale) / 2;
+        const dy = (H - sH * scale) / 2;
+        ctx.drawImage(treeCanvas, dx, dy, sW * scale, sH * scale);
 
-        // 2. 底部渐变遮罩 (让文字看得清)
-        const gradient = ctx.createLinearGradient(0, H - 900, 0, H);
+        // 3. 底部遮罩 (更柔和)
+        const gradient = ctx.createLinearGradient(0, H - 700, 0, H);
         gradient.addColorStop(0, 'rgba(0,0,0,0)');
-        gradient.addColorStop(0.6, 'rgba(0,0,0,0.8)');
-        gradient.addColorStop(1, 'rgba(0,0,0,1)');
+        gradient.addColorStop(0.7, 'rgba(0,0,0,0.85)');
+        gradient.addColorStop(1, '#000');
         ctx.fillStyle = gradient;
-        ctx.fillRect(0, H - 900, W, 900);
+        ctx.fillRect(0, H - 700, W, 700);
 
-        // 3. 随机选取一句祝福语
-        const randomMsg = blessings[Math.floor(Math.random() * blessings.length)];
-
-        // 4. 绘制文字
+        // 4. 文字
         ctx.textAlign = 'center';
         
-        // 2026 水印
+        // 2026
         ctx.font = 'bold 180px "Times New Roman"';
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-        ctx.fillText('2026', W/2, H - 450);
+        ctx.fillStyle = 'rgba(255,255,255,0.06)';
+        ctx.fillText('2026', W/2, H - 480);
 
-        // 中文祝福
-        ctx.font = 'bold 56px "Songti SC", "SimSun", serif';
-        ctx.fillStyle = '#fceabb'; // 香槟金
-        ctx.shadowColor = 'rgba(0,0,0,0.8)'; ctx.shadowBlur = 20;
-        ctx.fillText(randomMsg.cn, W/2, H - 380);
-
-        // 英文祝福
-        ctx.font = 'italic 28px "Times New Roman"';
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        // 祝福语
+        const txt = msgs[Math.floor(Math.random() * msgs.length)];
+        ctx.font = '48px "Songti SC", serif';
+        ctx.fillStyle = '#fceabb'; // 金色
+        ctx.shadowColor = 'rgba(252, 234, 187, 0.5)'; ctx.shadowBlur = 15; // 文字发光
+        ctx.fillText(txt, W/2, H - 400);
         ctx.shadowBlur = 0;
-        ctx.fillText(randomMsg.en, W/2, H - 320);
 
-        // 5. 二维码 & 公众号 (融合在底部)
-        const currentUrl = window.location.href;
+        // 5. 彩色二维码生成
         document.getElementById('qrcode-container').innerHTML = '';
+        
+        // 我们用一个特殊的颜色生成二维码
+        // 这里的 colorDark 就是二维码线条的颜色，我们设为金色！
         new QRCode(document.getElementById('qrcode-container'), {
-          text: currentUrl, width: 200, height: 200,
-          colorDark : "#000000", colorLight : "#ffffff",
+          text: window.location.href, width: 256, height: 256,
+          colorDark : "#d4af37", // 香槟金
+          colorLight : "transparent", // 透明底
           correctLevel : QRCode.CorrectLevel.H
         });
 
         setTimeout(() => {
           const qrImg = document.getElementById('qrcode-container').querySelector('img');
           if (qrImg) {
-            // 在底部画一个半透明的玻璃框
-            const boxW = 800;
-            const boxH = 220;
-            const boxX = (W - boxW) / 2;
-            const boxY = H - 260;
-            
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+            // 绘制一个发光的圆环底座 (模拟卡通/艺术感)
+            const qrCenterY = H - 240;
+            ctx.shadowColor = 'rgba(212, 175, 55, 0.4)';
+            ctx.shadowBlur = 30;
+            ctx.strokeStyle = 'rgba(212, 175, 55, 0.5)';
             ctx.lineWidth = 2;
-            // 圆角矩形 (简单画法)
-            ctx.fillRect(boxX, boxY, boxW, boxH);
-            ctx.strokeRect(boxX, boxY, boxW, boxH);
+            ctx.beginPath();
+            ctx.arc(W/2, qrCenterY, 90, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.shadowBlur = 0;
 
-            // 放二维码 (左侧)
-            const qrSize = 180;
-            ctx.drawImage(qrImg, boxX + 20, boxY + 20, qrSize, qrSize);
-
-            // 放文字 (右侧)
-            ctx.textAlign = 'left';
+            // 绘制金色二维码
+            ctx.drawImage(qrImg, (W - 140)/2, qrCenterY - 70, 140, 140);
             
-            // 公众号
-            ctx.font = 'bold 40px "Microsoft YaHei"';
-            ctx.fillStyle = '#fff';
-            ctx.fillText('公众号：获嘉诗词空间', boxX + 230, boxY + 80);
-
-            // 落款
-            ctx.font = '30px "Songti SC"';
-            ctx.fillStyle = '#aaa';
-            ctx.fillText('红豆生南国 敬制', boxX + 230, boxY + 140);
-
-            // 扫码提示
-            ctx.font = '24px sans-serif';
-            ctx.fillStyle = '#d4af37';
-            ctx.fillText('⚡ 长按识别，生成你的专属贺卡', boxX + 230, boxY + 190);
+            // 公众号名字
+            ctx.font = '28px "Microsoft YaHei"';
+            ctx.fillStyle = '#999';
+            ctx.fillText('公众号 · 获嘉诗词空间', W/2, H - 80);
           }
-
           document.getElementById('final-image').src = cvs.toDataURL('image/jpeg', 0.9);
           document.getElementById('poster-modal').style.display = 'flex';
         }, 100);
