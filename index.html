@@ -6,14 +6,31 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <title>Christmas 2026</title>
     <style>
-      /* 基础重置 */
-      * { margin: 0; padding: 0; box-sizing: border-box; }
-      html, body, #root { width: 100%; height: 100%; overflow: hidden; background: #000; }
+      /* 全屏铺满 */
+      html, body {
+        width: 100vw; height: 100vh;
+        overflow: hidden; background-color: #000;
+        position: fixed; top: 0; left: 0;
+      }
+      #root { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
       
-      /* 隐藏原本的丑按钮 */
+      /* Canvas 强制显示在最上层 */
+      canvas {
+        display: block !important;
+        width: 100% !important; height: 100% !important;
+        position: absolute !important; top: 0; left: 0;
+        z-index: 10 !important; opacity: 1 !important;
+        background: transparent !important;
+      }
+      /* 视频垫底 */
+      video {
+        position: absolute !important; top: 0; left: 0;
+        width: 100% !important; height: 100% !important;
+        object-fit: cover !important; z-index: 0 !important; opacity: 0.6 !important;
+      }
       input[type="file"] { display: none !important; }
     </style>
-    <script type="module" crossorigin src="./assets/index-BfY4FF4p.js"></script>
+    <script type="module" crossorigin src="./assets/index-UDkcV884.js"></script>
     <link rel="modulepreload" crossorigin href="./assets/react-vendor-Bzgz95E1.js">
     <link rel="modulepreload" crossorigin href="./assets/three-vendor-IWongE37.js">
     <link rel="modulepreload" crossorigin href="./assets/postprocessing-vendor-Oz0s9CZI.js">
@@ -22,27 +39,26 @@
     <div id="root"></div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-    <!-- 公众号 (浮在最上层) -->
-    <div style="position: fixed; bottom: 20px; width: 100%; text-align: center; color: rgba(255,255,255,0.5); font-size: 12px; z-index: 9999; pointer-events: none;">
+    <!-- 公众号 -->
+    <div style="position: fixed; bottom: 20px; width: 100%; text-align: center; color: rgba(255,255,255,0.5); font-size: 12px; z-index: 9999; pointer-events: none; font-family: sans-serif;">
       公众号 · 获嘉诗词空间
     </div>
 
-    <!-- 两个新按钮 -->
-    <div style="position: fixed; bottom: 60px; width: 100%; display: flex; justify-content: center; gap: 40px; z-index: 9999;">
-      <!-- 挂照片：去点那个被隐藏的 input -->
-      <div onclick="document.querySelector('input[type=file]').click()" style="color: #fff; font-size: 16px; cursor: pointer; text-shadow: 0 2px 5px #000; display: flex; align-items: center; gap: 5px;">
+    <!-- 按钮 -->
+    <div style="position: fixed; bottom: 60px; width: 100%; display: flex; justify-content: center; gap: 40px; z-index: 9999; pointer-events: none;">
+      <div onclick="document.querySelector('input[type=file]').click()" style="color: #fff; font-size: 16px; cursor: pointer; text-shadow: 0 2px 5px #000; pointer-events: auto; display: flex; align-items: center; gap: 5px;">
         🎁 挂照片
       </div>
-      <!-- 生成贺卡 -->
-      <div onclick="createPoster()" style="color: #fceabb; font-size: 16px; cursor: pointer; font-weight: bold; text-shadow: 0 2px 5px #000; display: flex; align-items: center; gap: 5px;">
+      <div onclick="createPoster()" style="color: #fceabb; font-size: 16px; cursor: pointer; font-weight: bold; text-shadow: 0 2px 5px #000; pointer-events: auto; display: flex; align-items: center; gap: 5px;">
         ✨ 生成贺卡
       </div>
     </div>
 
-    <!-- 海报弹窗 (保持不变) -->
+    <!-- 弹窗 -->
     <div id="poster-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.96); z-index: 100000; flex-direction: column; align-items: center; justify-content: center;">
-      <img id="final-image" style="width: 85%; max-width: 450px; border-radius: 8px;" />
-      <div onclick="document.getElementById('poster-modal').style.display='none'" style="margin-top: 30px; color: #fff; font-size: 30px; cursor: pointer;">×</div>
+      <img id="final-image" style="width: 85%; max-width: 450px; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.6);" />
+      <div style="color: #666; margin-top: 15px; font-size: 13px;">长按保存 · 分享 2026 祝福</div>
+      <div onclick="document.getElementById('poster-modal').style.display='none'" style="margin-top: 25px; color: #fff; font-size: 30px; cursor: pointer; width: 40px; height: 40px; line-height: 40px; text-align: center; border: 1px solid #444; border-radius: 50%;">×</div>
     </div>
     <div id="qrcode-container" style="display: none;"></div>
 
@@ -50,45 +66,32 @@
       const msgs = ["岁岁常欢愉，年年皆胜意", "凛冬散尽，星河长明", "所求皆如愿，所行化坦途"];
       function createPoster() {
         const treeCanvas = document.querySelector('canvas');
-        if (!treeCanvas) { alert('请等待圣诞树加载完毕...'); return; }
-        
+        if (!treeCanvas) { alert('请稍等，圣诞树正在生长...'); return; }
         try {
           const cvs = document.createElement('canvas');
           const ctx = cvs.getContext('2d');
           const W = 1080; const H = 1920; 
           cvs.width = W; cvs.height = H;
-
-          // 背景
           ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
-          
-          // 树 (Cover)
           const sW = treeCanvas.width; const sH = treeCanvas.height;
           const scale = Math.max(W/sW, H/sH);
           const dx = (W - sW * scale) / 2; const dy = (H - sH * scale) / 2;
           ctx.drawImage(treeCanvas, dx, dy, sW * scale, sH * scale);
-
-          // 遮罩 & 文字
           const gradient = ctx.createLinearGradient(0, H - 700, 0, H);
           gradient.addColorStop(0, 'rgba(0,0,0,0)'); gradient.addColorStop(1, '#000');
           ctx.fillStyle = gradient; ctx.fillRect(0, H - 700, W, 700);
-
           ctx.textAlign = 'center';
           ctx.font = 'bold 180px "Times New Roman"'; ctx.fillStyle = 'rgba(255,255,255,0.06)';
           ctx.fillText('2026', W/2, H - 480);
-          
           const txt = msgs[Math.floor(Math.random() * msgs.length)];
           ctx.font = '50px "Songti SC", serif'; ctx.fillStyle = '#fceabb';
           ctx.fillText(txt, W/2, H - 400);
-
-          // 二维码
           const container = document.getElementById('qrcode-container');
           container.innerHTML = '';
           new QRCode(container, {
             text: window.location.href, width: 256, height: 256,
             colorDark : "#d4af37", colorLight : "transparent", correctLevel : QRCode.CorrectLevel.L
           });
-
-          // 轮询绘制
           let attempts = 0;
           const checkInterval = setInterval(() => {
             const qrImg = container.querySelector('img');
@@ -97,7 +100,6 @@
             }
             if (++attempts > 40) { clearInterval(checkInterval); if(qrImg) drawFinal(qrImg); }
           }, 50);
-
           function drawFinal(qrImg) {
             const qrCenterY = H - 220;
             ctx.fillStyle = '#b32020'; ctx.beginPath(); ctx.arc(W/2, qrCenterY, 95, 0, Math.PI * 2); ctx.fill();
