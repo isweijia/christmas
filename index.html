@@ -8,32 +8,37 @@
     <style>
       /* 全屏铺满 */
       html, body {
-        width: 100vw; height: 100vh;
+        width: 100vw; height: 100vh; margin: 0; padding: 0;
         overflow: hidden; background-color: #000;
         position: fixed; top: 0; left: 0;
       }
       #root { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
       
-      /* Canvas 强制显示在最上层 */
+      /* 强制 Canvas 透明且置顶 */
       canvas {
         display: block !important;
         width: 100% !important; height: 100% !important;
         position: absolute !important; top: 0; left: 0;
-        z-index: 10 !important; opacity: 1 !important;
-        background: transparent !important;
+        z-index: 10 !important; 
+        opacity: 1 !important;
+        background: transparent !important; /* 关键 */
       }
-      /* 视频垫底 */
+
+      /* 视频置底 */
       video {
         position: absolute !important; top: 0; left: 0;
         width: 100% !important; height: 100% !important;
-        object-fit: cover !important; z-index: 0 !important; opacity: 0.6 !important;
+        object-fit: cover !important; 
+        z-index: 0 !important; 
+        opacity: 0.5 !important;
       }
+
       input[type="file"] { display: none !important; }
     </style>
-    <script type="module" crossorigin src="./assets/index-CEjcQGPX.js"></script>
+    <script type="module" crossorigin src="./assets/index-DaYIrI6q.js"></script>
     <link rel="modulepreload" crossorigin href="./assets/react-vendor-Bzgz95E1.js">
-    <link rel="modulepreload" crossorigin href="./assets/three-vendor-CWnbhLmg.js">
-    <link rel="modulepreload" crossorigin href="./assets/postprocessing-vendor-ByfFaCd3.js">
+    <link rel="modulepreload" crossorigin href="./assets/three-vendor-IWongE37.js">
+    <link rel="modulepreload" crossorigin href="./assets/postprocessing-vendor-Oz0s9CZI.js">
   </head>
   <body>
     <div id="root"></div>
@@ -54,7 +59,7 @@
       </div>
     </div>
 
-    <!-- 弹窗 -->
+    <!-- 海报弹窗 -->
     <div id="poster-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.96); z-index: 100000; flex-direction: column; align-items: center; justify-content: center;">
       <img id="final-image" style="width: 85%; max-width: 450px; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.6);" />
       <div style="color: #666; margin-top: 15px; font-size: 13px;">长按保存 · 分享 2026 祝福</div>
@@ -65,33 +70,40 @@
     <script>
       const msgs = ["岁岁常欢愉，年年皆胜意", "凛冬散尽，星河长明", "所求皆如愿，所行化坦途"];
       function createPoster() {
-        const treeCanvas = document.querySelector('canvas');
-        if (!treeCanvas) { alert('请稍等，圣诞树正在生长...'); return; }
+        // 多种方式获取画布
+        const treeCanvas = document.querySelector('canvas') || document.getElementById('root').querySelector('canvas');
+        if (!treeCanvas) { alert('请稍等，场景加载中...'); return; }
+        
         try {
           const cvs = document.createElement('canvas');
           const ctx = cvs.getContext('2d');
           const W = 1080; const H = 1920; 
           cvs.width = W; cvs.height = H;
+
           ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
           const sW = treeCanvas.width; const sH = treeCanvas.height;
           const scale = Math.max(W/sW, H/sH);
           const dx = (W - sW * scale) / 2; const dy = (H - sH * scale) / 2;
           ctx.drawImage(treeCanvas, dx, dy, sW * scale, sH * scale);
+
           const gradient = ctx.createLinearGradient(0, H - 700, 0, H);
           gradient.addColorStop(0, 'rgba(0,0,0,0)'); gradient.addColorStop(1, '#000');
           ctx.fillStyle = gradient; ctx.fillRect(0, H - 700, W, 700);
+
           ctx.textAlign = 'center';
           ctx.font = 'bold 180px "Times New Roman"'; ctx.fillStyle = 'rgba(255,255,255,0.06)';
           ctx.fillText('2026', W/2, H - 480);
           const txt = msgs[Math.floor(Math.random() * msgs.length)];
           ctx.font = '50px "Songti SC", serif'; ctx.fillStyle = '#fceabb';
           ctx.fillText(txt, W/2, H - 400);
+
           const container = document.getElementById('qrcode-container');
           container.innerHTML = '';
           new QRCode(container, {
             text: window.location.href, width: 256, height: 256,
             colorDark : "#d4af37", colorLight : "transparent", correctLevel : QRCode.CorrectLevel.L
           });
+
           let attempts = 0;
           const checkInterval = setInterval(() => {
             const qrImg = container.querySelector('img');
@@ -100,6 +112,7 @@
             }
             if (++attempts > 40) { clearInterval(checkInterval); if(qrImg) drawFinal(qrImg); }
           }, 50);
+
           function drawFinal(qrImg) {
             const qrCenterY = H - 220;
             ctx.fillStyle = '#b32020'; ctx.beginPath(); ctx.arc(W/2, qrCenterY, 95, 0, Math.PI * 2); ctx.fill();
