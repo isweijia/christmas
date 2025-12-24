@@ -6,59 +6,63 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <title>Christmas 2026</title>
     <style>
-      /* --- 核心修复：层级与全屏 --- */
+      /* --- 1. 核心修复：强制全屏，无黑边 --- */
       * { margin: 0; padding: 0; box-sizing: border-box; }
       
       html, body {
         width: 100vw; height: 100vh;
         overflow: hidden; background-color: #000;
-        position: fixed; top: 0; left: 0;
+        position: fixed; top: 0; left: 0; /* 锁死位置，防止手机浏览器回弹 */
       }
 
-      /* 容器层级 */
+      /* --- 2. 核心修复：图层顺序 (解决黑屏) --- */
+      /* 容器 */
       #root {
         width: 100%; height: 100%;
         position: absolute; top: 0; left: 0;
         z-index: 1;
       }
 
-      /* 圣诞树画布：强制最顶层显示 */
+      /* 圣诞树画布：必须在最上层 (z-index: 10) */
       canvas {
         display: block !important;
         width: 100% !important; 
         height: 100% !important;
         position: absolute !important;
         top: 0; left: 0;
-        z-index: 10 !important; /* 关键：确保在视频之上 */
+        z-index: 10 !important; 
         opacity: 1 !important;
+        background: transparent !important; /* 确保画布透明 */
       }
 
-      /* 背景视频：底层 */
-      video {
+      /* 背景视频/图片：必须在底层 (z-index: 0) */
+      video, img.bg {
         position: absolute !important;
         top: 0; left: 0;
         width: 100% !important; height: 100% !important;
         object-fit: cover !important;
-        z-index: 0 !important; /* 关键：放在最底下 */
-        opacity: 0.6 !important;
+        z-index: 0 !important; 
+        opacity: 0.6 !important; /* 稍微暗一点 */
       }
 
-      /* 隐藏自带按钮 */
+      /* 隐藏原本的丑按钮 */
       input[type="file"] { display: none !important; }
     </style>
-    <script type="module" crossorigin src="./assets/index-CMoh9Od5.js"></script>
+    <script type="module" crossorigin src="./assets/index-ERSyeTrV.js"></script>
     <link rel="modulepreload" crossorigin href="./assets/react-vendor-Bzgz95E1.js">
-    <link rel="modulepreload" crossorigin href="./assets/three-vendor-IWongE37.js">
-    <link rel="modulepreload" crossorigin href="./assets/postprocessing-vendor-Oz0s9CZI.js">
+    <link rel="modulepreload" crossorigin href="./assets/three-vendor-CWnbhLmg.js">
+    <link rel="modulepreload" crossorigin href="./assets/postprocessing-vendor-ByfFaCd3.js">
   </head>
   <body>
     <!-- React 挂载点 -->
     <div id="root"></div>
+    
+    <!-- ⚠️ 路径已确认为 ./index.tsx -->
 
-    <!-- ==================== UI 控制层 ==================== -->
+    <!-- ==================== UI 层 ==================== -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-    <!-- 底部公众号 (最顶层文字) -->
+    <!-- 底部公众号 -->
     <div style="
       position: fixed; bottom: 20px; width: 100%; text-align: center;
       color: rgba(255,255,255,0.5); font-size: 12px; z-index: 9999; pointer-events: none;
@@ -67,7 +71,7 @@
       公众号 · 获嘉诗词空间
     </div>
 
-    <!-- 操作按钮区 -->
+    <!-- 操作按钮 (挂照片 + 贺卡) -->
     <div style="
       position: fixed; bottom: 60px; width: 100%; display: flex; justify-content: center; gap: 40px; 
       z-index: 9999; pointer-events: none;
@@ -101,12 +105,9 @@
       const msgs = ["岁岁常欢愉，年年皆胜意", "凛冬散尽，星河长明", "所求皆如愿，所行化坦途"];
 
       function createPoster() {
-        // 尝试多种方式获取画布，确保万无一失
-        const treeCanvas = document.querySelector('canvas') || document.getElementById('root').querySelector('canvas');
-        
-        if (!treeCanvas) { 
-          alert('圣诞树还在准备中，请稍等...'); return; 
-        }
+        // 多种方式尝试获取画布
+        const treeCanvas = document.querySelector('canvas');
+        if (!treeCanvas) { alert('圣诞树加载中，请稍等...'); return; }
 
         try {
           const cvs = document.createElement('canvas');
@@ -117,7 +118,7 @@
           // 1. 背景
           ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
           
-          // 2. 绘制树 (Cover 模式铺满)
+          // 2. 绘制树 (Cover 铺满)
           const sW = treeCanvas.width;
           const sH = treeCanvas.height;
           const scale = Math.max(W/sW, H/sH);
@@ -154,18 +155,17 @@
             correctLevel : QRCode.CorrectLevel.L
           });
 
-          // 轮询检测图片生成 (解决手机白屏)
+          // 轮询检测
           let attempts = 0;
           const checkInterval = setInterval(() => {
             const qrImg = container.querySelector('img');
             if (qrImg && qrImg.src) {
               clearInterval(checkInterval);
-              // 延时一点点确保渲染
               setTimeout(() => drawFinal(qrImg), 50);
             }
             if (++attempts > 40) { 
               clearInterval(checkInterval);
-              if(qrImg) drawFinal(qrImg); // 超时也试着画一下
+              if(qrImg) drawFinal(qrImg);
             }
           }, 50);
 
