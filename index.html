@@ -167,5 +167,21 @@
         } catch (e) { alert('Error: ' + e.message); }
       }
     </script>
+<!-- ==================== 隐形访客统计 ==================== -->
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<div style="
+  position: fixed; bottom: 5px; width: 100%; text-align: center;
+  color: rgba(255, 255, 255, 0.15); /* 极低透明度，像水印一样 */
+  font-size: 9px; 
+  font-family: 'Courier New', monospace; /* 机械感字体 */
+  z-index: 9998; pointer-events: none;
+  letter-spacing: 1px;
+">
+  <!-- 显示格式：V.2026.今日.总计 -->
+  V.2026.<span id="busuanzi_value_page_pv">0</span>.<span id="busuanzi_value_site_uv">0</span>
+</div>
+<!-- ==================== 统计结束 ==================== -->
+
   </body>
 </html>
