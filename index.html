@@ -1,121 +1,46 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <title>Christmas 2026</title>
+    <title>Grand Luxury Interactive Christmas Tree</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-      * { margin: 0; padding: 0; box-sizing: border-box; }
-      html, body {
-        width: 100vw; height: 100vh;
-        overflow: hidden; background-color: #000;
+      @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
+      body, html {
+        margin: 0; padding: 0; width: 100%; height: 100%;
+        overflow: hidden; background-color: #020402;
+        /* 修复手机黑边 */
         position: fixed; top: 0; left: 0;
       }
-      #root { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
-      
-      /* 强制 Canvas 显示 */
-      canvas {
-        display: block !important;
-        width: 100% !important; height: 100% !important;
-        position: absolute !important; top: 0; left: 0;
-        z-index: 10 !important; 
-        background: transparent !important;
-      }
-      /* 视频层级 */
-      video {
-        position: absolute !important; top: 0; left: 0;
-        width: 100% !important; height: 100% !important;
-        object-fit: cover !important; z-index: 0 !important; opacity: 0.5 !important;
-      }
-      input[type="file"] { display: none !important; }
+      #root { width: 100%; height: 100%; }
+      /* 强制 Canvas 满屏且透明 */
+      canvas { width: 100% !important; height: 100% !important; display: block; outline: none; background: transparent !important; }
     </style>
-    <script type="module" crossorigin src="./assets/index-Bp5XZ1CO.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+          "react/": "https://aistudiocdn.com/react@^19.2.0/",
+          "react": "https://aistudiocdn.com/react@^19.2.0",
+          "@react-three/fiber": "https://aistudiocdn.com/@react-three/fiber@^9.4.0",
+          "three": "https://aistudiocdn.com/three@^0.181.2",
+          "@react-three/postprocessing": "https://aistudiocdn.com/@react-three/postprocessing@^3.0.4",
+          "@react-three/drei": "https://aistudiocdn.com/@react-three/drei@^10.7.7",
+          "postprocessing": "https://aistudiocdn.com/postprocessing@^6.38.0",
+          "@mediapipe/tasks-vision": "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/+esm"
+        }
+      }
+    </script>
+    <script type="module" crossorigin src="./assets/index-DxWqxv4K.js"></script>
     <link rel="modulepreload" crossorigin href="./assets/react-vendor-Bzgz95E1.js">
     <link rel="modulepreload" crossorigin href="./assets/three-vendor-IWongE37.js">
     <link rel="modulepreload" crossorigin href="./assets/postprocessing-vendor-Oz0s9CZI.js">
   </head>
   <body>
     <div id="root"></div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
-    <div style="position: fixed; bottom: 20px; width: 100%; text-align: center; color: rgba(255,255,255,0.5); font-size: 12px; z-index: 9999; pointer-events: none; font-family: sans-serif;">
-      公众号 · 获嘉诗词空间
-    </div>
-
-    <div style="position: fixed; bottom: 60px; width: 100%; display: flex; justify-content: center; gap: 40px; z-index: 9999; pointer-events: none;">
-      <div onclick="document.querySelector('input[type=file]').click()" style="color: #fff; font-size: 16px; cursor: pointer; text-shadow: 0 2px 5px #000; pointer-events: auto; display: flex; align-items: center; gap: 5px;">
-        🎁 挂照片
-      </div>
-      <div onclick="createPoster()" style="color: #fceabb; font-size: 16px; cursor: pointer; font-weight: bold; text-shadow: 0 2px 5px #000; pointer-events: auto; display: flex; align-items: center; gap: 5px;">
-        ✨ 生成贺卡
-      </div>
-    </div>
-
-    <div id="poster-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.96); z-index: 100000; flex-direction: column; align-items: center; justify-content: center;">
-      <img id="final-image" style="width: 85%; max-width: 450px; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.6);" />
-      <div style="color: #666; margin-top: 15px; font-size: 13px;">长按保存 · 分享 2026 祝福</div>
-      <div onclick="document.getElementById('poster-modal').style.display='none'" style="margin-top: 25px; color: #fff; font-size: 30px; cursor: pointer; width: 40px; height: 40px; line-height: 40px; text-align: center; border: 1px solid #444; border-radius: 50%;">×</div>
-    </div>
-    <div id="qrcode-container" style="display: none;"></div>
-
-    <script>
-      const msgs = ["岁岁常欢愉，年年皆胜意", "凛冬散尽，星河长明", "所求皆如愿，所行化坦途"];
-      function createPoster() {
-        const treeCanvas = document.querySelector('canvas') || document.getElementById('root').querySelector('canvas');
-        if (!treeCanvas) { alert('请稍等，圣诞树正在生长...'); return; }
-        try {
-          const cvs = document.createElement('canvas');
-          const ctx = cvs.getContext('2d');
-          const W = 1080; const H = 1920; 
-          cvs.width = W; cvs.height = H;
-
-          ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
-          const sW = treeCanvas.width; const sH = treeCanvas.height;
-          const scale = Math.max(W/sW, H/sH);
-          const dx = (W - sW * scale) / 2; const dy = (H - sH * scale) / 2;
-          ctx.drawImage(treeCanvas, dx, dy, sW * scale, sH * scale);
-
-          const gradient = ctx.createLinearGradient(0, H - 700, 0, H);
-          gradient.addColorStop(0, 'rgba(0,0,0,0)'); gradient.addColorStop(1, '#000');
-          ctx.fillStyle = gradient; ctx.fillRect(0, H - 700, W, 700);
-
-          ctx.textAlign = 'center';
-          ctx.font = 'bold 180px "Times New Roman"'; ctx.fillStyle = 'rgba(255,255,255,0.06)';
-          ctx.fillText('2026', W/2, H - 480);
-          const txt = msgs[Math.floor(Math.random() * msgs.length)];
-          ctx.font = '50px "Songti SC", serif'; ctx.fillStyle = '#fceabb';
-          ctx.fillText(txt, W/2, H - 400);
-
-          const container = document.getElementById('qrcode-container');
-          container.innerHTML = '';
-          new QRCode(container, {
-            text: window.location.href, width: 256, height: 256,
-            colorDark : "#d4af37", colorLight : "transparent", correctLevel : QRCode.CorrectLevel.L
-          });
-
-          let attempts = 0;
-          const checkInterval = setInterval(() => {
-            const qrImg = container.querySelector('img');
-            if (qrImg && qrImg.src) {
-              clearInterval(checkInterval); setTimeout(() => drawFinal(qrImg), 50);
-            }
-            if (++attempts > 40) { clearInterval(checkInterval); if(qrImg) drawFinal(qrImg); }
-          }, 50);
-
-          function drawFinal(qrImg) {
-            const qrCenterY = H - 220;
-            ctx.fillStyle = '#b32020'; ctx.beginPath(); ctx.arc(W/2, qrCenterY, 95, 0, Math.PI * 2); ctx.fill();
-            ctx.strokeStyle = '#d4af37'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(W/2, qrCenterY - 95); ctx.lineTo(W/2, qrCenterY - 300); ctx.stroke();
-            ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(W/2, qrCenterY, 80, 0, Math.PI * 2); ctx.fill();
-            ctx.drawImage(qrImg, (W - 130)/2, qrCenterY - 65, 130, 130);
-            ctx.font = '30px "Microsoft YaHei"'; ctx.fillStyle = '#fff';
-            ctx.fillText('公众号 · 获嘉诗词空间', W/2, H - 60);
-            document.getElementById('final-image').src = cvs.toDataURL('image/jpeg', 0.9);
-            document.getElementById('poster-modal').style.display = 'flex';
-          }
-        } catch (e) { alert('Error: ' + e.message); }
-      }
-    </script>
+    <!-- 路径修正 -->
   </body>
 </html>
